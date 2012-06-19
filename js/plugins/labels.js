@@ -227,7 +227,6 @@ Flotr.addPlugin('labels', {
             angleStyle,
             '" class="flotr-grid-label' + name + '">' + tick.label + '</div>'
           ].join(' ');
-          console.log("html",html);
           if (!isX && !isFirst) {
             ctx.moveTo(offset.left + graph.plotWidth - 8, offset.top + axis.d2p(tick.v));
             ctx.lineTo(offset.left + graph.plotWidth, offset.top + axis.d2p(tick.v));

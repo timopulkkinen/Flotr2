@@ -3728,6 +3728,41 @@ Flotr.addType('lines', {
 });
 
 /** Bars **/
+window.requestAnimFrame = (function(callback){
+    return window.requestAnimationFrame ||
+    window.webkitRequestAnimationFrame ||
+    window.mozRequestAnimationFrame ||
+    window.oRequestAnimationFrame ||
+    window.msRequestAnimationFrame ||
+    function(callback){
+        window.setTimeout(callback, 1000 / 60);
+    };
+})();
+  function fillRectWithAnimation(context, params) {
+  	if(!params.cleft) {
+		params.cleft = params.left;
+  		params.ctop = params.height + params.top;
+  		params.cwidth = params.width;
+  		params.cheight = 0;
+  	} else if(params.ctop - params.top < 1 ){
+	  	context.save();
+	  	context.fillStyle=params.fillStyle;
+
+		context.fillRect(params.left, params.top, params.width, params.height);
+		context.restore();
+  		return;
+  	} 
+  	context.save();
+  	context.fillStyle=params.fillStyle;
+	context.fillRect(params.left, params.ctop, params.cwidth, params.cheight);
+	context.restore();
+  	params.ctop=params.ctop-10.0;
+  	params.cheight=params.cheight+10.0;
+  	requestAnimFrame(function() {
+  		fillRectWithAnimation(context,params);
+  	});
+  }
+  
 Flotr.addType('bars', {
 
   options: {
@@ -3741,7 +3776,8 @@ Flotr.addType('bars', {
     stacked: false,        // => stacked bar charts
     centered: true,        // => center the bars to their x axis value
     topPadding: 0.1,       // => top padding in percent
-    grouped: false         // => groups bars together which share x value, hit not supported.
+    grouped: false,        // => groups bars together which share x value, hit not supported.
+    animate:true 
   },
 
   stack : { 
@@ -3763,12 +3799,11 @@ Flotr.addType('bars', {
     context.lineWidth = options.lineWidth;
     context.strokeStyle = options.color;
     if (options.fill) context.fillStyle = options.fillStyle;
-    
-    this.plot(options);
-
-    context.restore();
+	this.plot(options);
+	context.restore();
   },
 
+  
   plot : function (options) {
 
     var
@@ -3791,15 +3826,30 @@ Flotr.addType('bars', {
       width   = geometry.width;
       height  = geometry.height;
 
-      if (options.fill) context.fillRect(left, top, width, height);
+      if (options.fill) {
+		if(options.animate) {
+			context.save();
+			fillRectWithAnimation(context,{
+				fillStyle:options.fillStyle,
+				left:geometry.left,
+				top:geometry.top,
+				width:geometry.width,
+				height:geometry.height
+
+			});
+		} else {
+      		context.fillRect(left,top,width,height);
+		}
+      }
       if (shadowSize) {
-        context.save();
-        context.fillStyle = 'rgba(0,0,0,0.05)';
-        context.fillRect(left + shadowSize, top + shadowSize, width, height);
-        context.restore();
+        	context.save();
+        	context.fillStyle = 'rgba(0,0,0,0.05)';
+        	context.fillRect(left + shadowSize, top + shadowSize, width, height);
+        	context.restore();
+
       }
       if (options.lineWidth) {
-        context.strokeRect(left, top, width, height);
+        	context.strokeRect(left, top, width, height);
       }
     }
   },
@@ -3876,22 +3926,11 @@ Flotr.addType('bars', {
       hitGeometry = this.getBarGeometry(x, y, options),
       width = hitGeometry.width / 2,
       left = hitGeometry.left,
-      height = hitGeometry.y,
       geometry, i;
 
     for (i = data.length; i--;) {
       geometry = this.getBarGeometry(data[i][0], data[i][1], options);
-      if (
-        // Height:
-        (
-          // Positive Bars:
-          (height > 0 && height < geometry.y) ||
-          // Negative Bars:
-          (height < 0 && height > geometry.y)
-        ) &&
-        // Width:
-        (Math.abs(left - geometry.left) < width)
-      ) {
+      if (geometry.y > hitGeometry.y && Math.abs(left - geometry.left) < width) {
         n.x = data[i][0];
         n.y = data[i][1];
         n.index = i;

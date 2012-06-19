@@ -175,8 +175,11 @@ Flotr.addPlugin('labels', {
         isFirst = axis.n === 1,
         name = '',
         left, style, top,
-        offset = graph.plotOffset;
-
+        offset = graph.plotOffset,
+		angle = Flotr.toRad(axis.options.labelsAngle),
+		angleStyle = '';
+		
+		
       if (!isX && !isFirst) {
         ctx.save();
         ctx.strokeStyle = axis.options.color || options.grid.color;
@@ -204,16 +207,27 @@ Flotr.addPlugin('labels', {
             name = ' last';
           }
           name += isX ? ' flotr-grid-label-x' : ' flotr-grid-label-y';
-
+		  if(angle!=0) {
+		  	angleStyle = [
+		  	'-moz-transform:rotate('+angle+'rad);',
+		  	'-webkit-transform-origin:100% 50%;-webkit-transform:rotate('+angle+'rad);',
+		  	'-o-transform:rotate('+angle+'rad);',
+		  	'-ms-transform:rotate('+angle+'rad);',
+		  	'transform:rotate('+angle+'rad);',
+		  	'margin-top:' + options.grid.labelMargin+"px; "
+		  	].join(' ');
+		  	
+		  }
           html += [
-            '<div style="position:absolute; text-align:' + (isX ? 'center' : 'right') + '; ',
+            '<div style="position:absolute; text-align:' + (isX && angle==0 ? 'center' : (isX ? (angle>0?'left':'right') : 'right')) + '; ',
             'top:' + top + 'px; ',
             ((!isX && !isFirst) ? 'right:' : 'left:') + left + 'px; ',
             'width:' + (isX ? xBoxWidth : ((isFirst ? offset.left : offset.right) - options.grid.labelMargin)) + 'px; ',
             axis.options.color ? ('color:' + axis.options.color + '; ') : ' ',
+            angleStyle,
             '" class="flotr-grid-label' + name + '">' + tick.label + '</div>'
           ].join(' ');
-          
+          console.log("html",html);
           if (!isX && !isFirst) {
             ctx.moveTo(offset.left + graph.plotWidth - 8, offset.top + axis.d2p(tick.v));
             ctx.lineTo(offset.left + graph.plotWidth, offset.top + axis.d2p(tick.v));
@@ -222,6 +236,6 @@ Flotr.addPlugin('labels', {
       }
     }
   }
-
+  
 });
 })();
